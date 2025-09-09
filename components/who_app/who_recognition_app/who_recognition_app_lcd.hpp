@@ -3,6 +3,7 @@
 #include "who_frame_lcd_disp.hpp"
 #include "who_recognition_app_base.hpp"
 #include "who_text_result_handle.hpp"
+#include "who_wakeup_word.hpp"
 
 namespace who {
 namespace app {
@@ -18,6 +19,7 @@ protected:
     virtual void lcd_disp_cb(who::cam::cam_fb_t *fb);
     virtual void recognition_cleanup();
     virtual void detect_cleanup();
+    virtual void wakeup_word_callback(const std::string &word);
 
 private:
     lcd_disp::WhoFrameLCDDisp *m_lcd_disp;
@@ -25,6 +27,7 @@ private:
     lcd_disp::WhoTextResultLCDDisp *m_text_result_lcd_disp;
     lcd_disp::WhoDetectResultLCDDisp *m_detect_result_lcd_disp;
     lv_obj_t *m_label;
+    wakeup::WhoWakeupWord *m_wakeup_word;
 };
 } // namespace app
 } // namespace who

@@ -8,7 +8,8 @@ namespace who {
 namespace app {
 WhoRecognitionAppLCD::WhoRecognitionAppLCD(frame_cap::WhoFrameCap *frame_cap) :
     WhoRecognitionAppBase(frame_cap),
-    m_lcd_disp(new lcd_disp::WhoFrameLCDDisp("LCDDisp", frame_cap->get_last_node(), 1))
+    m_lcd_disp(new lcd_disp::WhoFrameLCDDisp("LCDDisp", frame_cap->get_last_node(), 1)),
+    m_wakeup_word(new wakeup::WhoWakeupWord())
 {
     WhoApp::add_task(m_lcd_disp);
     m_lcd_disp->set_lcd_disp_cb(std::bind(&WhoRecognitionAppLCD::lcd_disp_cb, this, std::placeholders::_1));
@@ -57,6 +58,20 @@ WhoRecognitionAppLCD::WhoRecognitionAppLCD(frame_cap::WhoFrameCap *frame_cap) :
     recognition_task->set_cleanup_func(std::bind(&WhoRecognitionAppLCD::recognition_cleanup, this));
     detect_task->set_detect_result_cb(std::bind(&WhoRecognitionAppLCD::detect_result_cb, this, std::placeholders::_1));
     detect_task->set_cleanup_func(std::bind(&WhoRecognitionAppLCD::detect_cleanup, this));
+    
+    // Initialize wake-up word detection
+    ESP_LOGI("WhoRecognitionAppLCD", "Setting up wake-up word detection...");
+    m_wakeup_word->set_wakeup_callback(std::bind(&WhoRecognitionAppLCD::wakeup_word_callback, this, std::placeholders::_1));
+    if (m_wakeup_word->init()) {
+        ESP_LOGI("WhoRecognitionAppLCD", "Wake-up word initialized successfully, starting...");
+        if (m_wakeup_word->start()) {
+            ESP_LOGI("WhoRecognitionAppLCD", "Wake-up word started successfully");
+        } else {
+            ESP_LOGE("WhoRecognitionAppLCD", "Failed to start wake-up word");
+        }
+    } else {
+        ESP_LOGE("WhoRecognitionAppLCD", "Failed to initialize wake-up word");
+    }
 }
 
 WhoRecognitionAppLCD::~WhoRecognitionAppLCD()
@@ -64,6 +79,7 @@ WhoRecognitionAppLCD::~WhoRecognitionAppLCD()
     delete m_recognition_button;
     delete m_text_result_lcd_disp;
     delete m_detect_result_lcd_disp;
+    delete m_wakeup_word;
     bsp_display_lock(0);
     lv_obj_del(m_label);
     bsp_display_unlock();
@@ -105,6 +121,13 @@ void app::WhoRecognitionAppLCD::recognition_cleanup()
 void app::WhoRecognitionAppLCD::detect_cleanup()
 {
     m_detect_result_lcd_disp->cleanup();
+}
+
+void app::WhoRecognitionAppLCD::wakeup_word_callback(const std::string &word)
+{
+    // Display the message on the screen when wake-up word is detected
+    ESP_LOGI("WhoRecognitionAppLCD", "Wakeup callback received: %s", word.c_str());
+    m_text_result_lcd_disp->save_text_result(word);
 }
 } // namespace app
 } // namespace who
