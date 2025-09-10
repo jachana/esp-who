@@ -1,0 +1,9 @@
+# Build folder
+/build/
+
+# Lock files
+dependencies.lock
+
+# SDK configuration
+sdkconfig
+sdkconfig.old
