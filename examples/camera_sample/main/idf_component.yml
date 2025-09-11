@@ -1,0 +1,4 @@
+## IDF Component Manager Manifest File
+dependencies:
+  esp32_s3_eye:
+    version: '*'
